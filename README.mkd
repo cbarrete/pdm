@@ -1,0 +1,164 @@
+Title:      RDM user's manual
+Summary:    RDM is an alternative deathmatch gametype for Warsow.  The only
+            distinction from the default deathmatch is that the score is
+            measured not by frags, but by a numeric equivalent of the beauty
+            of the shots.
+Copyright:  (c) 2011-2016 Vitaly Minko
+            Content is available under GNU Free Documentation License 1.3 and
+            Creative Commons Attribution-Share Alike 3.0 Unported License
+Date:       2 Oct 2016
+Web:        http://vminko.org/rdm
+
+
+Introduction
+============
+
+Raging Deathmatch (RDM) is an alternative deathmatch gametype for
+[Warsow][wsw]. The only distinction from the default deathmatch is that the
+score is measured not by frags, but by a numeric equivalent of the beauty of
+the shots.
+
+The basic rule of the gametype is that you have to move fast to get decent
+score. See the description below for details of how the score is calculated.
+
+
+Score
+=====
+
+The score you get depends on the following parameters:
+
+1. Your speed.
+2. Speed of your target.
+3. Distance between you and your target.
+
+The harder it is to hit the target (higher speeds, longer distance), the higher
+score you'll get. If your speed is very low, then your score gets significantly
+dumped (anti-camper protection).
+
+Here is the exact formula:
+
+                  /            / Va'\2  /      min(Vta', Vtg') \   / Dat \ \
+    score = floor | DS * ACF * |----| * | 1 + -----------------| * |-----| |
+                  \            \ Nv /   \            Nv        /   \ Nd  / /
+
+Where
+
+* *DS* is the default score for a "normal" shot (100).
+* *ACF* is the anti-camper factor, see the description below.
+* *Va'* is the projection of the attacker's velocity relative to ground to
+  the flat surface that is perpendicular to the vector from the attacker
+  to the target.
+* *Vta'* is the projection of the target's velocity relative to the attacker to
+  the flat surface that is perpendicular to the vector from the target to the
+  attacker.
+* *Vtg'* is the projection of the target's velocity relative to the ground to
+  the flat surface that is perpendicular to the vector from the target to the
+  attacker.
+* *Nv* is the normal velocity (600).
+* *Dat* is the distance between the attacker and the target.
+* *Nd* is the normal distance (800).
+
+Anti-camper factor
+------------------
+
+The idea behind the factor is to make camping uninteresting. We significantly
+decrease score if the attacker's velocity is lower than the normal velocity
+(*Nv*). If the velocity is noticeably higher than *Nv*, then ACF almost does
+not affect the score (i.e. it's close to 1).
+
+Here is the exact formula:
+
+                /         / Va     \ \    pi 
+          arctan| scale * |---- - 1| | + ---  
+                \         \ Nv     / /    2  
+    ACF = ----------------------------------
+                          pi
+
+Where
+
+* *Va* is the length of the player's velocity vector.
+* *Nv* is the normal velocity (600).
+* *scale* specifies how fast the factor grows (12).
+
+And [here][acf_plot] is what it looks like.
+
+
+Awards
+======
+
+There are two types of awards:
+
+1. *nice shot* for a shot with the score higher or equal than 500 and lower
+   than 1000;
+2. *awesome* for a shot with the score higher or equal than 1000.
+
+
+Notes
+=====
+
+Due to the nature of the gametype, it is not supposed to work with normal
+weapons (i.e. with Instagib disabled).
+
+
+Download
+========
+
+The current version is 0.6. The pk3-file containing the source code is
+available [here][dnld_curr]. The older releases are located [here][dnld_old].
+
+RDM is free software: you can redistribute it and/or modify it under the
+terms of the GNU [General Public License version 3][gpl3].
+
+
+ChangeLog
+=========
+
+__2 Oct 2016__ - Version __0.6__  
+  The default timelimit changed from 10 to 20 minutes.
+
+__20 Sep 2016__ - Version __0.5__  
+  Fixed embarrassing mistake in the function RDM_min. Thanks to Maarten
+  Snauwaert. 
+
+__14 Mar 2016__ - Version __0.4__  
+  Provided compatibility with Warsow-2.0.  
+
+__26 Sep 2015__ - Version __0.3__  
+  Provided compatibility with Warsow-1.5.  
+
+__14 Sep 2012__ - Version __0.2__  
+  Provided compatibility with Warsow-1.0.  
+  Selfkill now is punished by 500 points.  
+  Fixed wrong behaviour when Instagib is disabled.  
+  Welcome text no longer displayed when returning from spectator.  
+  Fixed wrong time handling.
+
+__04 Nov 2011__ - Version __0.1__  
+  First public release.
+
+
+ToDo
+====
+
+Below is the list of features which I consider useful, but I can't promise that
+any of them will ever be implemented.
+
+* TRDM - Team Raging Deathmatch.
+* Add ability to get/set RDM parameters via command line and votes. 
+* Make players' score and time tolerant to joining spectators and returning
+  back within the same round.
+
+
+Alternatives
+============
+
+* [Fast Clan Arena][fca]. This gametype will not let you shoot below the
+  minimum speed, it's compatible with normal weapons.
+
+
+[wsw]: http://www.warsow.net/
+[acf_plot]: http://www.wolframalpha.com/input/?i=plot+%28atan%2812*%28x-1%29%29%2Bpi%2F2%29%2Fpi+from+x%3D0+to+4
+[dnld_curr]: /storage/rdm/rdm_06.pk3
+[dnld_old]: /storage/rdm/
+[gpl3]: http://www.gnu.org/licenses/gpl.html
+[fca]: http://forum.picmip.org/forum/thread/12217/1
