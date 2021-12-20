@@ -33,17 +33,24 @@ The score you get depends on the following parameters:
 3. Distance between you and your target.
 
 The harder it is to hit the target (higher speeds, longer distance), the higher
-score you'll get. You lose points if your speed is too low (anti-camper protection).
+score you'll get. If your score is less than DS, you'll instead lose a fraction
+of your current score proportional to how much less than DS you did.
 
 Here is the exact formula:
 
-                  /            / Va'\2  /      min(Vta', Vtg') \   / Dat \     \
-    score = floor | DS * ACF * |----| * | 1 + -----------------| * |-----| - P |
-                  \            \ Nv /   \            Nv        /   \ Nd  /     /
+                  /            / Va'\2  /      min(Vta', Vtg') \   / Dat \ \
+    score = floor | DS * ACF * |----| * | 1 + -----------------| * |-----| |
+                  \            \ Nv /   \            Nv        /   \ Nd  / /
 
+And if score < DS:
+
+                 /       score - DS  \
+    finalScore = | CS * ------------ |
+                 \           DS      /
 Where
 
 * *DS* is the default score for a "normal" shot (100).
+* *CS* is the current total score of the attacker.
 * *ACF* is the anti-camper factor, see the description below.
 * *Va'* is the projection of the attacker's velocity relative to ground to
   the flat surface that is perpendicular to the vector from the attacker
@@ -57,7 +64,6 @@ Where
 * *Nv* is the normal velocity (600).
 * *Dat* is the distance between the attacker and the target.
 * *Nd* is the normal distance (800).
-* *P* is the punishment.
 
 Anti-camper factor
 ------------------
@@ -83,13 +89,6 @@ Where
 
 And [here][acf_plot] is what it looks like.
 
-
-Punishment
-----------
-
-If the anti-camper factor is over 97.5% (about 1250 units of speed), the
-punishment value is 0, otherwise it is (1 - ACF) * totalScore. In other words,
-a player can lose up to all of their points for a bad shot.
 
 Awards
 ======
