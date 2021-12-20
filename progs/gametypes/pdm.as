@@ -162,9 +162,6 @@ int PDM_calculateScore( Entity @target, Entity @attacker )
      * attacker's velocity is lower than the normVelocity */
     float anticampFactor = PDM_getAnticampFactor( velocityA.length() / normVelocity );
 
-    // How much of your score you can lose to camping
-    int punishment = anticampFactor > 0.975 ? 0 : int(( 1 - anticampFactor ) * attacker.client.stats.score);
-
     /* Projection of the target's velocity relative to the ground to the flat
      * surface that is perpendicular to the vector from the target
      * to the attacker */
@@ -182,16 +179,17 @@ int PDM_calculateScore( Entity @target, Entity @attacker )
     /* Choose minimal projection */
     float projectionT = PDM_min( projectionTg, projectionTa );
 
-    float score = defScore
+    const float score = defScore
                 * anticampFactor
                 * pow( projectionA / normVelocity, 2.0f )
                 * ( 1.0f + projectionT / normVelocity )
-                * ( PDM_getDistance( attacker, target ) / normDist )
-                - punishment;
+                * ( PDM_getDistance( attacker, target ) / normDist );
+    const int finalScore = int(score > defScore ? score : (attacker.client.stats.score * (score - defScore) / defScore));
 
-    if ( punishment > 0.0 )
-        attacker.client.addAward(S_COLOR_RED + "Too slow! -" + punishment);
-    attacker.client.addAward(String(int(score)));
+    if ( finalScore > 0 )
+        attacker.client.addAward(String(int(finalScore)));
+    else
+        attacker.client.addAward(S_COLOR_RED + "You suck! " + int(finalScore));
 
     if ( pdmDebug.boolean )
         G_Print( S_COLOR_BLUE + "DEBUG:" +
@@ -203,11 +201,10 @@ int PDM_calculateScore( Entity @target, Entity @attacker )
                  " Vta = " + velocityTa.length() +
                  " Ata = " + int( angleTa * 180.0f / pi ) +
                  " D = " + PDM_getDistance( attacker, target ) +
-                 " S = " + score +
-                 " P = " + punishment +
+                 " S = " + finalScore +
                  "\n" );
 
-    return int( score );
+    return finalScore;
 }
 
 // a player has just died. The script is warned about it so it can account scores
@@ -228,7 +225,7 @@ void PDM_playerKilled( Entity @target, Entity @attacker, Entity @inflicter )
     {
        int score = PDM_calculateScore( target, attacker );
        attacker.client.stats.addScore( score );
-       if (score < 0)
+       if (score <= 0)
        {
            G_PrintMsg( null,
                        attacker.client.name + " sucks! (" + score + " points)\n" );
@@ -289,8 +286,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
                  + "3. Distance between you and your target.\n"
                  + "\n"
                  + "The harder it is to hit the target (higher speeds, longer distance),"
-                 + " the higher score you'll get. You lose points if your speed is too low"
-                 + " (anti-camper punishment).\n"
+                 + " the higher score you'll get. You lose points if your shots are too easy.\n"
                  + "\n"
                  + "Have fun!\n"
                  + S_COLOR_WHITE;
