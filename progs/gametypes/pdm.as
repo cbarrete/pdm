@@ -162,7 +162,7 @@ int RDM_calculateScore( Entity @target, Entity @attacker )
     float anticampFactor = RDM_getAnticampFactor( velocityA.length() / normVelocity );
 
     // How much of your score you can lose to camping
-    float punishment = anticampFactor > 0.975 ? 0 : ( 1 - anticampFactor ) * attacker.client.stats.score;
+    int punishment = anticampFactor > 0.975 ? 0 : int(( 1 - anticampFactor ) * attacker.client.stats.score);
 
     /* Projection of the target's velocity relative to the ground to the flat
      * surface that is perpendicular to the vector from the target
@@ -188,6 +188,8 @@ int RDM_calculateScore( Entity @target, Entity @attacker )
                 * ( RDM_getDistance( attacker, target ) / normDist )
                 - punishment;
 
+    if ( punishment > 0.0 )
+        attacker.client.addAward(S_COLOR_RED + "Too slow! -" + punishment);
     attacker.client.addAward(String(int(score)));
 
     if ( rdmDebug.boolean )
