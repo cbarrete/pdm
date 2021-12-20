@@ -162,7 +162,6 @@ int RDM_calculateScore( Entity @target, Entity @attacker )
     float anticampFactor = RDM_getAnticampFactor( velocityA.length() / normVelocity );
 
     // How much of your score you can lose to camping
-    float punishmentFactor = 1.0;
     float punishment = ( 1 - anticampFactor ) * attacker.client.stats.score;
 
     /* Projection of the target's velocity relative to the ground to the flat
