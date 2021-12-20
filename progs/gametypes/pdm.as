@@ -189,6 +189,8 @@ int RDM_calculateScore( Entity @target, Entity @attacker )
                 * ( RDM_getDistance( attacker, target ) / normDist )
                 - punishment;
 
+    attacker.client.addAward(String(int(score)));
+
     if ( rdmDebug.boolean )
         G_Print( S_COLOR_BLUE + "DEBUG:" +
                  " ACF = " + anticampFactor +
