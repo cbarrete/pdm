@@ -230,13 +230,13 @@ void RDM_playerKilled( Entity @target, Entity @attacker, Entity @inflicter )
        {
            attacker.client.addAward("Nice shot");
            G_PrintMsg( null,
-                       attacker.client.name + " made a nice shot\n" );
+                       attacker.client.name + " made a nice shot (" + score + " points)\n" );
        }
        if ( score >= 1000 )
        {
            attacker.client.addAward(S_COLOR_RED + "!!! A W E S O M E !!!");
            G_PrintMsg( null,
-                       attacker.client.name + S_COLOR_RED + " is AWESOME!\n" );
+                       attacker.client.name + S_COLOR_RED + " is AWESOME! (" + score + " points)\n" );
        }
     }
 }
