@@ -226,17 +226,28 @@ void RDM_playerKilled( Entity @target, Entity @attacker, Entity @inflicter )
     {
        int score = RDM_calculateScore( target, attacker );
        attacker.client.stats.addScore( score );
-       if ( score >= 500 && score < 1000 )
+       if (score < 0)
        {
-           attacker.client.addAward("Nice shot");
            G_PrintMsg( null,
-                       attacker.client.name + " made a nice shot (" + score + " points)\n" );
+                       attacker.client.name + " sucks! (" + score + " points)\n" );
        }
-       if ( score >= 1000 )
+       else if ( score >= 2500 )
+       {
+           attacker.client.addAward(S_COLOR_BLACK + "mental");
+           G_PrintMsg( null,
+                       attacker.client.name + S_COLOR_BLACK + " is mental (" + score + " points)\n" );
+       }
+       else if ( score >= 1000 )
        {
            attacker.client.addAward(S_COLOR_RED + "!!! A W E S O M E !!!");
            G_PrintMsg( null,
                        attacker.client.name + S_COLOR_RED + " is AWESOME! (" + score + " points)\n" );
+       }
+       else if ( score >= 500 )
+       {
+           attacker.client.addAward("Nice shot");
+           G_PrintMsg( null,
+                       attacker.client.name + " made a nice shot (" + score + " points)\n" );
        }
     }
 }
