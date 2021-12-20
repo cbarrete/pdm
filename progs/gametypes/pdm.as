@@ -1,8 +1,9 @@
-//  Raging Deathmatch is an alternative deathmatch gametype for Warsow.
+//  Punishing Deathmatch is an alternative deathmatch gametype for Warsow.
 //  The only distinction from the default deathmatch is that the score is
 //  measured not by frags, but by a numeric equivalent of the beauty of
-//  the shots.
+//  the shots. Bad shots punish you by removing a fraction of your total score.
 //
+//  Copyright (C) 2021 Cédric Barreteau
 //  Copyright (C) 2011-2016 Vitaly Minko <vitaly.minko@gmail.com>
 //  Copyright (C) 2002-2009 The Warsow devteam
 //
@@ -19,24 +20,24 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
-//  Version 0.6 from 2 Oct 2016
-//  Based on the DeathMatch gametype
+//  Version 1.0 from 19 Dec 2021
+//  Based on the Raging DeathMatch gametype (https://vminko.org/rdm)
 
 // Do we have builtin math constants?
 const float pi = 3.14159265f;
 
-Vec3[] rdmVelocities( maxClients );
-uint[] rdmTimes( maxClients );
+Vec3[] pdmVelocities( maxClients );
+uint[] pdmTimes( maxClients );
 bool[] isWelcomed( maxClients );
-uint rdmEndTime = 0;
+uint pdmEndTime = 0;
 
-Cvar rdmDebug( "rdm_debug", "1", CVAR_ARCHIVE );
+Cvar pdmDebug( "pdm_debug", "1", CVAR_ARCHIVE );
 
 ///*****************************************************************
-/// RDM FUNCTIONS
+/// PDM FUNCTIONS
 ///*****************************************************************
 
-int RDM_round( float f )
+int PDM_round( float f )
 {
     if ( abs( f - floor( f ) ) < 0.5f )
         return int( f );
@@ -44,12 +45,12 @@ int RDM_round( float f )
         return int( f + f / abs( f ) );
 }
 
-float RDM_min( float a, float b )
+float PDM_min( float a, float b )
 {
     return ( a >= b ) ? b : a;
 }
 
-String RDM_getTimeString( int num )
+String PDM_getTimeString( int num )
 {
     String minsString, secsString;
     String notime = "--:--";
@@ -62,14 +63,14 @@ String RDM_getTimeString( int num )
         return notime;
 
     case MATCH_STATE_PLAYTIME:
-        mtime = levelTime - rdmTimes[ num ];
+        mtime = levelTime - pdmTimes[ num ];
         break;
 
     case MATCH_STATE_POSTMATCH:
     case MATCH_STATE_WAITEXIT:
-        if ( rdmEndTime > 0 )
+        if ( pdmEndTime > 0 )
         {
-            mtime = rdmEndTime - rdmTimes[ num ];
+            mtime = pdmEndTime - pdmTimes[ num ];
             break;
         }
 
@@ -77,7 +78,7 @@ String RDM_getTimeString( int num )
         return notime;
     }
 
-    stime = RDM_round( mtime / 1000.0f );
+    stime = PDM_round( mtime / 1000.0f );
     min = stime / 60;
     sec = stime % 60;
 
@@ -87,12 +88,12 @@ String RDM_getTimeString( int num )
     return minsString + ":" + secsString;
 }
 
-float RDM_getDistance( Entity @a, Entity @b )
+float PDM_getDistance( Entity @a, Entity @b )
 {
     return a.origin.distance( b.origin );
 }
 
-float RDM_getAngle( Vec3 a, Vec3 b )
+float PDM_getAngle( Vec3 a, Vec3 b )
 {   
     Vec3 my_a = a;
     Vec3 my_b = b;
@@ -106,7 +107,7 @@ float RDM_getAngle( Vec3 a, Vec3 b )
     return abs( acos( my_a.x * my_b.x + my_a.y * my_b.y + my_a.z * my_b.z ) );
 }
 
-float RDM_getAngleFactor ( float angle )
+float PDM_getAngleFactor ( float angle )
 {
     const float minAcuteFactor = 0.15f;
     const float minObtuseFactor = 0.30f;
@@ -116,7 +117,7 @@ float RDM_getAngleFactor ( float angle )
         minObtuseFactor + ( 1.0f - minObtuseFactor ) * sin( angle );
 }
 
-Vec3 RDM_getVector( Entity @a, Entity @b )
+Vec3 PDM_getVector( Entity @a, Entity @b )
 {
     Vec3 ao;
     Vec3 bo;
@@ -130,7 +131,7 @@ Vec3 RDM_getVector( Entity @a, Entity @b )
     return bo;
 }
 
-float RDM_getAnticampFactor ( float normalizedVelocity )
+float PDM_getAnticampFactor ( float normalizedVelocity )
 {
     // How fast does the factor grow?
     const float scale = 12.0f;
@@ -138,7 +139,7 @@ float RDM_getAnticampFactor ( float normalizedVelocity )
     return ( atan( scale * ( normalizedVelocity - 1.0f ) ) + pi / 2.0f ) / pi;
 }
 
-int RDM_calculateScore( Entity @target, Entity @attacker )
+int PDM_calculateScore( Entity @target, Entity @attacker )
 {
     // Default score for a "normal" shot
     const float defScore = 100.0f;
@@ -147,19 +148,19 @@ int RDM_calculateScore( Entity @target, Entity @attacker )
     // Normal distance
     const float normDist = 800.0f;
 
-    Vec3 directionAt = RDM_getVector( attacker, target );
-    Vec3 directionTa = RDM_getVector( target, attacker );
+    Vec3 directionAt = PDM_getVector( attacker, target );
+    Vec3 directionTa = PDM_getVector( target, attacker );
 
     /* Projection of the attacker's velocity relative to ground to the flat
      * surface that is perpendicular to the vector from the attacker
      * to the target */
     Vec3 velocityA = attacker.velocity;
-    float angleA = RDM_getAngle( velocityA, directionAt );
-    float projectionA = RDM_getAngleFactor( angleA ) * velocityA.length();
+    float angleA = PDM_getAngle( velocityA, directionAt );
+    float projectionA = PDM_getAngleFactor( angleA ) * velocityA.length();
 
     /* Anti-camping dumping - we significantly decrease projection if the
      * attacker's velocity is lower than the normVelocity */
-    float anticampFactor = RDM_getAnticampFactor( velocityA.length() / normVelocity );
+    float anticampFactor = PDM_getAnticampFactor( velocityA.length() / normVelocity );
 
     // How much of your score you can lose to camping
     int punishment = anticampFactor > 0.975 ? 0 : int(( 1 - anticampFactor ) * attacker.client.stats.score);
@@ -167,32 +168,32 @@ int RDM_calculateScore( Entity @target, Entity @attacker )
     /* Projection of the target's velocity relative to the ground to the flat
      * surface that is perpendicular to the vector from the target
      * to the attacker */
-    Vec3 velocityTg = rdmVelocities[ target.playerNum ];
-    float angleTg = RDM_getAngle( velocityTg, directionTa );
-    float projectionTg = RDM_getAngleFactor( angleTg ) * velocityTg.length();
+    Vec3 velocityTg = pdmVelocities[ target.playerNum ];
+    float angleTg = PDM_getAngle( velocityTg, directionTa );
+    float projectionTg = PDM_getAngleFactor( angleTg ) * velocityTg.length();
 
     /* Projection of the target's velocity relative to the attacker to the flat
      * surface that is perpendicular to the vector from the target
      * to the attacker */
     Vec3 velocityTa = velocityTg - attacker.velocity;
-    float angleTa = RDM_getAngle( velocityTa, directionTa );
-    float projectionTa = RDM_getAngleFactor( angleTa ) * velocityTa.length();
+    float angleTa = PDM_getAngle( velocityTa, directionTa );
+    float projectionTa = PDM_getAngleFactor( angleTa ) * velocityTa.length();
 
     /* Choose minimal projection */
-    float projectionT = RDM_min( projectionTg, projectionTa );
+    float projectionT = PDM_min( projectionTg, projectionTa );
 
     float score = defScore
                 * anticampFactor
                 * pow( projectionA / normVelocity, 2.0f )
                 * ( 1.0f + projectionT / normVelocity )
-                * ( RDM_getDistance( attacker, target ) / normDist )
+                * ( PDM_getDistance( attacker, target ) / normDist )
                 - punishment;
 
     if ( punishment > 0.0 )
         attacker.client.addAward(S_COLOR_RED + "Too slow! -" + punishment);
     attacker.client.addAward(String(int(score)));
 
-    if ( rdmDebug.boolean )
+    if ( pdmDebug.boolean )
         G_Print( S_COLOR_BLUE + "DEBUG:" +
                  " ACF = " + anticampFactor +
                  " Va = " + velocityA.length() +
@@ -201,15 +202,16 @@ int RDM_calculateScore( Entity @target, Entity @attacker )
                  " Atg = " + int( angleTg * 180.0f / pi ) +
                  " Vta = " + velocityTa.length() +
                  " Ata = " + int( angleTa * 180.0f / pi ) +
-                 " D = " + RDM_getDistance( attacker, target ) +
+                 " D = " + PDM_getDistance( attacker, target ) +
                  " S = " + score +
+                 " P = " + punishment +
                  "\n" );
 
     return int( score );
 }
 
 // a player has just died. The script is warned about it so it can account scores
-void RDM_playerKilled( Entity @target, Entity @attacker, Entity @inflicter )
+void PDM_playerKilled( Entity @target, Entity @attacker, Entity @inflicter )
 {
     if ( match.getState() != MATCH_STATE_PLAYTIME )
         return;
@@ -224,7 +226,7 @@ void RDM_playerKilled( Entity @target, Entity @attacker, Entity @inflicter )
     // update player score
     if ( @attacker != null && @attacker.client != null )
     {
-       int score = RDM_calculateScore( target, attacker );
+       int score = PDM_calculateScore( target, attacker );
        attacker.client.stats.addScore( score );
        if (score < 0)
        {
@@ -278,25 +280,20 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
         return true;
     }
     else if ( cmdString == "help" )
-    {        
+    {
         String response = "";
         response = S_COLOR_WHITE
-                 + "--------------- Information about " + S_COLOR_RED + "Raging"
-                 + S_COLOR_WHITE + " DeathMatch ---------------\n"
                  + "The score you get depends on the following parameters:\n"
                  + "1. Your speed.\n"
                  + "2. Speed of your target.\n"
                  + "3. Distance between you and your target.\n"
                  + "\n"
                  + "The harder it is to hit the target (higher speeds, longer distance),"
-                 + " the higher score you'll get. If your speed is very low, then your"
-                 + " score gets significantly dumped (anti-camper protection).\n"
+                 + " the higher score you'll get. You lose points if your speed is too low"
+                 + " (anti-camper punishment).\n"
                  + "\n"
-                 + "See " + S_COLOR_YELLOW + "vminko.org/rdm" + S_COLOR_WHITE
-                 + " for details of how the score is calculated.\n"
                  + "Have fun!\n"
-                 + S_COLOR_WHITE
-                 + "-----------------------------------------------------------------\n";
+                 + S_COLOR_WHITE;
         G_PrintMsg( client.getEnt(), response );
         return true;
     }
@@ -347,7 +344,7 @@ String @GT_ScoreboardMessage( uint maxlen )
         entry = "&p " + playerID + " "
               + ent.client.clanName + " "
               + ent.client.stats.score + " "
-              + RDM_getTimeString( ent.playerNum ) + " "
+              + PDM_getTimeString( ent.playerNum ) + " "
               + ent.client.ping + " "
                 + ( ent.client.isReady() ? "1" : "0" ) + " ";
 
@@ -383,7 +380,7 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
         int arg2 = args.getToken( 1 ).toInt();
 
         // target, attacker, inflictor
-        RDM_playerKilled( G_GetEntity( arg1 ), attacker, G_GetEntity( arg2 ) );
+        PDM_playerKilled( G_GetEntity( arg1 ), attacker, G_GetEntity( arg2 ) );
     }
     else if ( score_event == "award" )
     {
@@ -401,15 +398,15 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
          && new_team != TEAM_SPECTATOR
          && match.getState() == MATCH_STATE_PLAYTIME )
     {
-        rdmTimes[ ent.playerNum ] = levelTime;
+        pdmTimes[ ent.playerNum ] = levelTime;
     }
 
     if ( new_team != TEAM_SPECTATOR && !isWelcomed[ ent.playerNum ] )
     {
         String welcome = "";
         welcome = S_COLOR_WHITE
-                + "Welcome to " + S_COLOR_RED + "Raging" + S_COLOR_WHITE + " DeathMatch!\n"
-                + "The basic rule is that you have to move fast to get decent score.\n"
+                + "Welcome to Punishing DeathMatch!\n"
+                + "The basic rule is that you have to move fast to get a decent score.\n"
                 + "Type " + S_COLOR_YELLOW + "help" + S_COLOR_WHITE + " in"
                 + " the console for details.\n";
         G_PrintMsg( ent, welcome );
@@ -441,7 +438,7 @@ void GT_ThinkRules()
         Entity @ent = @G_GetClient( i ).getEnt();
         if ( ent.client.state() >= CS_SPAWNED && ent.team != TEAM_SPECTATOR )
         {
-            rdmVelocities[ ent.playerNum ] = ent.velocity;
+            pdmVelocities[ ent.playerNum ] = ent.velocity;
         }
     }
 }
@@ -459,11 +456,11 @@ bool GT_MatchStateFinished( int incomingMatchState )
 
     if ( incomingMatchState == MATCH_STATE_PLAYTIME )
         for ( int i = 0; i < maxClients; i++ )
-            rdmTimes[ i ] = levelTime;
+            pdmTimes[ i ] = levelTime;
 
     if ( match.getState() == MATCH_STATE_PLAYTIME &&
          incomingMatchState == MATCH_STATE_POSTMATCH )
-        rdmEndTime = levelTime;
+        pdmEndTime = levelTime;
 
     if ( match.getState() == MATCH_STATE_POSTMATCH )
         match.stopAutorecord();
@@ -479,7 +476,7 @@ void GT_MatchStateStarted()
     {
     case MATCH_STATE_WARMUP:
         GENERIC_SetUpWarmup();
-        rdmEndTime = 0;
+        pdmEndTime = 0;
         break;
 
     case MATCH_STATE_COUNTDOWN:
@@ -516,9 +513,9 @@ void GT_SpawnGametype()
 // right after the map entities spawning.
 void GT_InitGametype()
 {
-    gametype.title = "Raging Deathmatch";
+    gametype.title = "Punishing Deathmatch";
     gametype.version = "0.6";
-    gametype.author = "Vitaly Minko";
+    gametype.author = "Cédric Barreteau";
 
     // if the gametype doesn't have a config file, create it
     if ( !G_FileExists( "configs/server/gametypes/" + gametype.name + ".cfg" ) )
@@ -549,7 +546,7 @@ void GT_InitGametype()
                + "set g_countdown_time \"3\"\n"
                + "set g_maxtimeouts \"0\" // -1 = unlimited\n"
                + "set g_challengers_queue \"0\"\n"
-               + "set rdm_debug \"0\"\n"
+               + "set pdm_debug \"0\"\n"
                + "\necho \"" + gametype.name + ".cfg executed\"\n";
 
         G_WriteFile( "configs/server/gametypes/" + gametype.name + ".cfg", config );
@@ -599,8 +596,8 @@ void GT_InitGametype()
     // init per-client variables
     for ( int i = 0; i < maxClients; i++ )
     {
-        rdmVelocities[ i ] = Vec3( 0 );
-        rdmTimes[ i ] = 0;
+        pdmVelocities[ i ] = Vec3( 0 );
+        pdmTimes[ i ] = 0;
         isWelcomed[ i ] = true;
     }
 
