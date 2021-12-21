@@ -1,23 +1,10 @@
-Title:      PDM user's manual
-Summary:    PDM is an alternative deathmatch gametype for Warsow.  The only
-            distinction from the default deathmatch is that the score is
-            measured not by frags, but by a numeric equivalent of the beauty
-            of the shots.
-Copyright:  (c) 2021 Cédric Barreteau
-            (c) 2011-2016 Vitaly Minko
-            Content is available under GNU Free Documentation License 1.3 and
-            Creative Commons Attribution-Share Alike 3.0 Unported License
-Date:       20 Dec 2021
-Web:        http://vminko.org/rdm
-
-
 Introduction
 ============
 
 Punishing Deathmatch (PDM) is an alternative deathmatch gametype for
 [Warsow][wsw]. The only distinction from the default deathmatch is that the
 score is measured not by frags, but by a numeric equivalent of the beauty of
-the shots.
+the shots. Bad shots punish you by removing a fraction of your total score.
 
 The basic rule of the gametype is that you have to move fast to get decent
 score. See the description below for details of how the score is calculated.
@@ -111,6 +98,13 @@ weapons (i.e. with Instagib disabled).
 
 License
 =======
+
+(c) 2021 Cédric Barreteau
+
+(c) 2011-2016 Vitaly Minko
+
+Documentation available under GNU Free Documentation License 1.3 and Creative
+Commons Attribution-Share Alike 3.0 Unported License
 
 PDM is free software: you can redistribute it and/or modify it under the
 terms of the GNU [General Public License version 3][gpl3].
