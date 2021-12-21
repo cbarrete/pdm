@@ -20,7 +20,7 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
-//  Version 1.0 from 19 Dec 2021
+//  Version 1.1 from 20 Dec 2021
 //  Based on the Raging DeathMatch gametype (https://vminko.org/rdm)
 
 // Do we have builtin math constants?
@@ -521,7 +521,7 @@ void GT_SpawnGametype()
 void GT_InitGametype()
 {
     gametype.title = "Punishing Deathmatch";
-    gametype.version = "0.6";
+    gametype.version = "1.1";
     gametype.author = "Cédric Barreteau";
 
     // if the gametype doesn't have a config file, create it
