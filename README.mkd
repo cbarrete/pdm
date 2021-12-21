@@ -86,7 +86,8 @@ There are four types of awards:
    than 1000;
 2. *awesome* for a shot a score higher or equal than 1000 and lower than 2500;
 3. *mental* for a shot with a score higher or equal than 2500;
-4. *sucks* for a shot with a score lower or equal than 0.
+4. *sucks* for a shot with a score lower or equal than 100, resulting in points
+   lost.
 
 
 Notes
