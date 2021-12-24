@@ -219,7 +219,7 @@ void PDM_playerKilled(Entity @target, Entity @attacker, Entity @inflicter) {
        else if (attacker.client.stats.score > 15000 && attacker.client.stats.score - score < 15000)
            G_PrintMsg(null, attacker.client.name + " joined the " + S_COLOR_CYAN + "15k club\n");
        else if (attacker.client.stats.score > 10000 && attacker.client.stats.score - score < 10000)
-           G_PrintMsg(null, attacker.client.name + " joined the 10k club");
+           G_PrintMsg(null, attacker.client.name + " joined the 10k club\n");
     }
 }
 
