@@ -2,9 +2,10 @@ Introduction
 ============
 
 Punishing Deathmatch (PDM) is an alternative deathmatch gametype for
-[Warsow][wsw]. The only distinction from the default deathmatch is that the
-score is measured not by frags, but by a numeric equivalent of the beauty of
-the shots. Bad shots punish you by removing a fraction of your total score.
+[Warsow][wsw] forked from [Vitaly Minko's RDM][rdm]. The only distinction from
+the default deathmatch is that the score is measured not by frags, but by a
+numeric equivalent of the beauty of the shots. Bad shots punish you by removing
+a fraction of your total score.
 
 The basic rule of the gametype is that you have to move fast to get decent
 score. See the description below for details of how the score is calculated.
@@ -146,5 +147,6 @@ __04 Nov 2011__ - Version __0.1__
 
 
 [wsw]: http://www.warsow.net/
+[rdm]: http://vminko.org/rdm
 [acf_plot]: http://www.wolframalpha.com/input/?i=plot+%28atan%2812*%28x-1%29%29%2Bpi%2F2%29%2Fpi+from+x%3D0+to+4
 [gpl3]: http://www.gnu.org/licenses/gpl.html
